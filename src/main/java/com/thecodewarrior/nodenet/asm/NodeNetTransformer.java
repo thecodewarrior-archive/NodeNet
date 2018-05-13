@@ -92,7 +92,7 @@ public class NodeNetTransformer implements IClassTransformer, Opcodes {
                             // true we will jump past the block.
                             newInstructions.add(new MethodInsnNode(INVOKESTATIC, ASM_HOOKS, "processKeyBinds",
                                     "()Z", false));
-                            newInstructions.add(new JumpInsnNode(IFEQ, labelNode));
+                            newInstructions.add(new JumpInsnNode(IFNE, labelNode));
 
                             method.instructions.insertBefore(anode2, newInstructions);
                             return true;
