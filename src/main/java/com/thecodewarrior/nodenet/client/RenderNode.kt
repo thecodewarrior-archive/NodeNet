@@ -2,35 +2,27 @@ package com.thecodewarrior.nodenet.client
 
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats
 import org.lwjgl.opengl.GL11
-import com.sun.tools.internal.xjc.reader.Ring.begin
-import com.thecodewarrior.nodenet.common.entity.EntityNodeBase
+import com.thecodewarrior.nodenet.common.entity.EntityNode
 import net.minecraft.client.renderer.Tessellator
-import net.minecraft.util.math.AxisAlignedBB
 import net.minecraft.client.renderer.GlStateManager
-import com.teamwizardry.librarianlib.features.shader.ShaderHelper
-import org.lwjgl.opengl.ARBShaderObjects
-import net.minecraft.client.Minecraft
-import com.sun.deploy.util.GeneralUtil
 import com.teamwizardry.librarianlib.features.helpers.vec
 import com.teamwizardry.librarianlib.features.kotlin.color
 import com.teamwizardry.librarianlib.features.kotlin.pos
 import com.thecodewarrior.nodenet.glMatrix
-import scala.tools.nsc.typechecker.DestructureTypes.`DestructureType$class`.node
 import net.minecraft.util.ResourceLocation
 import net.minecraft.client.renderer.entity.RenderManager
 import net.minecraft.client.renderer.entity.Render
 import net.minecraft.entity.Entity
-import org.fusesource.jansi.Ansi
 import java.awt.Color
 
-class RenderNode(renderManager: RenderManager): Render<EntityNodeBase>(renderManager) {
+class RenderNode(renderManager: RenderManager): Render<EntityNode>(renderManager) {
 
-    override fun getEntityTexture(entity: EntityNodeBase): ResourceLocation? {
+    override fun getEntityTexture(entity: EntityNode): ResourceLocation? {
         // TODO Auto-generated method stub
         return null
     }
 
-    override fun doRender(entity: EntityNodeBase, x: Double, y: Double, z: Double, entityYaw: Float, partialTicks: Float) {
+    override fun doRender(entity: EntityNode, x: Double, y: Double, z: Double, entityYaw: Float, partialTicks: Float) {
         val tessellator = Tessellator.getInstance()
         val vb = tessellator.buffer
 
@@ -49,32 +41,32 @@ class RenderNode(renderManager: RenderManager): Render<EntityNodeBase>(renderMan
             var blue = Color.blue.darker()
             var white = Color.white.darker()
             val r = 1/8f
-
-            GlStateManager.depthMask(false)
-            GlStateManager.depthFunc(GL11.GL_GREATER)
-
-            vb.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR)
-            vb.pos(vec(r, 0, 0)).color(red).endVertex()
-            vb.pos(vec(0, 0, 0)).color(red).endVertex()
-            vb.pos(vec(0, 0, 0)).color(white).endVertex()
-            vb.pos(vec(-r, 0, 0)).color(white).endVertex()
-
-            vb.pos(vec(0, r, 0)).color(green).endVertex()
-            vb.pos(vec(0, 0, 0)).color(green).endVertex()
-            vb.pos(vec(0, 0, 0)).color(white).endVertex()
-            vb.pos(vec(0, -r, 0)).color(white).endVertex()
-
-            vb.pos(vec(0, 0, 0)).color(blue).endVertex()
-            vb.pos(vec(0, 0, 3*r)).color(blue).endVertex()
-            tessellator.draw()
-
-            red = red.brighter()
-            green = green.brighter()
-            blue = blue.brighter()
-            white = white.brighter()
+//
+//            GlStateManager.depthMask(false)
+//            GlStateManager.depthFunc(GL11.GL_GREATER)
+//
+//            vb.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR)
+//            vb.pos(vec(r, 0, 0)).color(red).endVertex()
+//            vb.pos(vec(0, 0, 0)).color(red).endVertex()
+//            vb.pos(vec(0, 0, 0)).color(white).endVertex()
+//            vb.pos(vec(-r, 0, 0)).color(white).endVertex()
+//
+//            vb.pos(vec(0, r, 0)).color(green).endVertex()
+//            vb.pos(vec(0, 0, 0)).color(green).endVertex()
+//            vb.pos(vec(0, 0, 0)).color(white).endVertex()
+//            vb.pos(vec(0, -r, 0)).color(white).endVertex()
+//
+//            vb.pos(vec(0, 0, 0)).color(blue).endVertex()
+//            vb.pos(vec(0, 0, 3*r)).color(blue).endVertex()
+//            tessellator.draw()
+//
+//            red = red.brighter()
+//            green = green.brighter()
+//            blue = blue.brighter()
+//            white = white.brighter()
 
             GlStateManager.depthMask(true)
-            GlStateManager.depthFunc(GL11.GL_LEQUAL)
+            GlStateManager.depthFunc(GL11.GL_ALWAYS)
 
             vb.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR)
             vb.pos(vec(r, 0, 0)).color(red).endVertex()
@@ -90,6 +82,8 @@ class RenderNode(renderManager: RenderManager): Render<EntityNodeBase>(renderMan
             vb.pos(vec(0, 0, 0)).color(blue).endVertex()
             vb.pos(vec(0, 0, 3*r)).color(blue).endVertex()
             tessellator.draw()
+
+            GlStateManager.depthFunc(GL11.GL_LEQUAL)
         }
 
         GlStateManager.enableTexture2D()

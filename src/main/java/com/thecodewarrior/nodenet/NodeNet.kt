@@ -1,7 +1,11 @@
 package com.thecodewarrior.nodenet
 
+import com.teamwizardry.librarianlib.features.base.ModCreativeTab
 import com.teamwizardry.librarianlib.features.utilities.LoggerBase
 import com.thecodewarrior.nodenet.common.CommonProxy
+import com.thecodewarrior.nodenet.common.item.ModItems
+import net.minecraft.item.Item
+import net.minecraft.item.ItemStack
 import net.minecraftforge.fml.common.Mod
 import net.minecraftforge.fml.common.SidedProxy
 import net.minecraftforge.fml.common.event.FMLInitializationEvent
@@ -40,6 +44,15 @@ object NodeNet {
 
     @SidedProxy(clientSide = CLIENT, serverSide = SERVER)
     lateinit var PROXY: CommonProxy
+
+    val creativeTab = object : ModCreativeTab() {
+        override val iconStack: ItemStack
+            get() = ItemStack(ModItems.manipulator)
+
+        init {
+            this.registerDefaultTab()
+        }
+    }
 }
 
 object NodeLog : LoggerBase("NodeNet")

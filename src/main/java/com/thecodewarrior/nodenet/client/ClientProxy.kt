@@ -1,13 +1,14 @@
 package com.thecodewarrior.nodenet.client
 
 import com.thecodewarrior.nodenet.common.CommonProxy
-import com.thecodewarrior.nodenet.common.entity.EntityNodeBase
+import com.thecodewarrior.nodenet.common.entity.EntityNode
 import net.minecraftforge.fml.client.registry.RenderingRegistry
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent
 
 class ClientProxy: CommonProxy() {
     override fun pre(event: FMLPreInitializationEvent) {
         super.pre(event)
-        RenderingRegistry.registerEntityRenderingHandler(EntityNodeBase::class.java, { RenderNode(it) })
+        NodeRenderer
+//        RenderingRegistry.registerEntityRenderingHandler(EntityNode::class.java, { RenderNode(it) })
     }
 }
