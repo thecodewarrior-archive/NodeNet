@@ -51,42 +51,42 @@ object NodeInteractionClient {
             rightDown = mc.gameSettings.keyBindUseItem.isKeyDown
             if(rightDown) {
                 (mc.player.heldItemMainhand.item as? INodeInteractingItem)
-                        ?.rightClickBegan(nodeMouseOver?.entity)
+                        ?.rightClickBegan(nodeMouseOver)
             } else {
                 (mc.player.heldItemMainhand.item as? INodeInteractingItem)
-                        ?.rightClickEnded(nodeMouseOver?.entity)
+                        ?.rightClickEnded(nodeMouseOver)
             }
         } else if(rightDown) {
             (mc.player.heldItemMainhand.item as? INodeInteractingItem)
-                    ?.rightClickTick(nodeMouseOver?.entity)
+                    ?.rightClickTick(nodeMouseOver)
         }
 
         if(leftDown != mc.gameSettings.keyBindAttack.isKeyDown) {
             leftDown = mc.gameSettings.keyBindAttack.isKeyDown
             if(leftDown) {
                 (mc.player.heldItemMainhand.item as? INodeInteractingItem)
-                        ?.leftClickBegan(nodeMouseOver?.entity)
+                        ?.leftClickBegan(nodeMouseOver)
             } else {
                 (mc.player.heldItemMainhand.item as? INodeInteractingItem)
-                        ?.leftClickEnded(nodeMouseOver?.entity)
+                        ?.leftClickEnded(nodeMouseOver)
             }
         } else if(leftDown) {
             (mc.player.heldItemMainhand.item as? INodeInteractingItem)
-                    ?.leftClickTick(nodeMouseOver?.entity)
+                    ?.leftClickTick(nodeMouseOver)
         }
 
         if(middleDown != mc.gameSettings.keyBindPickBlock.isKeyDown) {
             middleDown = mc.gameSettings.keyBindPickBlock.isKeyDown
             if(middleDown) {
                 (mc.player.heldItemMainhand.item as? INodeInteractingItem)
-                        ?.middleClickBegan(nodeMouseOver?.entity)
+                        ?.middleClickBegan(nodeMouseOver)
             } else {
                 (mc.player.heldItemMainhand.item as? INodeInteractingItem)
-                        ?.middleClickEnded(nodeMouseOver?.entity)
+                        ?.middleClickEnded(nodeMouseOver)
             }
         } else if(middleDown) {
             (mc.player.heldItemMainhand.item as? INodeInteractingItem)
-                    ?.middleClickTick(nodeMouseOver?.entity)
+                    ?.middleClickTick(nodeMouseOver)
         }
 
         if(rightDown || leftDown || middleDown) {

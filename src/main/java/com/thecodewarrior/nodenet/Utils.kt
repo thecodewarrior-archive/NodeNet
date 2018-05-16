@@ -3,7 +3,9 @@ package com.thecodewarrior.nodenet
 import com.teamwizardry.librarianlib.features.helpers.vec
 import com.teamwizardry.librarianlib.features.kotlin.plus
 import com.teamwizardry.librarianlib.features.kotlin.times
+import net.minecraft.client.renderer.BufferBuilder
 import net.minecraft.client.renderer.GlStateManager
+import net.minecraft.client.renderer.Tessellator
 import net.minecraft.entity.Entity
 import net.minecraft.util.math.MathHelper
 import net.minecraft.util.math.Vec3d
@@ -24,6 +26,10 @@ fun Entity.renderPosition(partialTicks: Float): Vec3d {
     ) * (1-partialTicks))
 }
 
+fun Entity.setPosition(v: Vec3d) {
+    this.setPosition(v.x, v.y, v.z)
+}
+
 fun World.getEntityByUUID(uuid: UUID, cachedId: Int?): Pair<Entity, Int>? {
     var entity: Entity?
     if(cachedId != null) {
@@ -41,4 +47,8 @@ fun Vec3d.rotationYaw(): Float {
 
 fun Vec3d.rotationPitch(): Float {
     return -Math.toDegrees(Math.asin(this.y)).toFloat()
+}
+
+inline fun drawing(callback: (tessellator: Tessellator, vb: BufferBuilder) -> Unit) {
+    callback(Tessellator.getInstance(), Tessellator.getInstance().buffer)
 }

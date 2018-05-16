@@ -46,7 +46,7 @@ class EntityNode(worldIn: World): EntityMod(worldIn), IEntityAdditionalSpawnData
         println("Yay my dudes!")
     }
 
-//    lateinit var node: Node
+    var node = Node(this)
 
     override fun getEntityBoundingBox(): AxisAlignedBB {
         return AxisAlignedBB(Vec3d.ZERO, Vec3d.ZERO)
@@ -57,13 +57,9 @@ class EntityNode(worldIn: World): EntityMod(worldIn), IEntityAdditionalSpawnData
     }
 
     override fun onUpdate() {
-        if(world.isRemote && ModItems.manipulator.draggingNode == this) {
-            if(ModItems.manipulator.draggingDistance != null) {
-                PacketHandler.NETWORK.sendToServer(PacketMoveNode(this.entityId, this.positionVector))
-            }
-            if(ModItems.manipulator.rotationNormal != null) {
-                PacketHandler.NETWORK.sendToServer(PacketRotateNode(this.entityId, this.rotationPitch, this.rotationYaw))
-            }
+        if(world.isRemote && ModItems.manipulator.manipulatingNode == this) {
+            PacketHandler.NETWORK.sendToServer(PacketMoveNode(this.entityId, this.positionVector))
+            PacketHandler.NETWORK.sendToServer(PacketRotateNode(this.entityId, this.rotationPitch, this.rotationYaw))
         }
     }
 

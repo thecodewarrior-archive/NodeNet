@@ -29,9 +29,10 @@ object NodeRenderer {
         if(player.heldItemMainhand.item !is INodeVisibleItem) return
         val entities = e.world.getEntities(EntityNode::class.java, { true })
 
-        GlStateManager.glLineWidth(4f)
         val tessellator = Tessellator.getInstance()
         val vb = tessellator.buffer
+
+        ModItems.manipulator.manipulatingHandle?.update(e.partialTicks)
 
         GlStateManager.depthFunc(GL11.GL_GREATER)
         drawForEach(entities, e.partialTicks) { entity ->
@@ -43,8 +44,8 @@ object NodeRenderer {
             val connected = entity.connectedEntities()
             if(connected.isNotEmpty()) {
                 connected.forEach {
-                    vb.pos(ModItems.manipulator.nodePosition(entity, e.partialTicks)).color(Color.cyan).endVertex()
-                    vb.pos(ModItems.manipulator.nodePosition(it, e.partialTicks)).color(Color.cyan).endVertex()
+                    vb.pos(entity.positionVector).color(Color.cyan).endVertex()
+                    vb.pos(it.positionVector).color(Color.cyan).endVertex()
                 }
             }
         }
@@ -54,10 +55,6 @@ object NodeRenderer {
             renderNodeAlways(entity, e.partialTicks)
             renderNode(entity, e.partialTicks)
         }
-        drawForEach(entities, e.partialTicks, true) { entity ->
-            GlStateManager.depthFunc(GL11.GL_LEQUAL)
-            renderNodeAxisAligned(entity, e.partialTicks)
-        }
 
         if(player.heldItemMainhand.item == ModItems.connector) {
             ModItems.connector.connectingFromNode?.let { e.world.getEntityByID(it) }?.let { source ->
@@ -65,7 +62,7 @@ object NodeRenderer {
 
                 val mouseOver = NodeInteractionClient.nodeMouseOver
                 val endPos = if(mouseOver != null) {
-                    ModItems.manipulator.nodePosition(mouseOver.entity, e.partialTicks)
+                    mouseOver.entity.positionVector
                 } else {
                     player.getPositionEyes(e.partialTicks) + (player.getLook(e.partialTicks) * 2)
                 }
@@ -82,21 +79,13 @@ object NodeRenderer {
         GlStateManager.depthFunc(GL11.GL_LEQUAL)
     }
 
-    fun drawForEach(entities: List<EntityNode>, partialTicks: Float, axisAligned: Boolean = false, draw: (entity: EntityNode) -> Unit) {
+    fun drawForEach(entities: List<EntityNode>, partialTicks: Float, draw: (entity: EntityNode) -> Unit) {
         val tinyOffset = vec(1e-3, 1e-3, 1e-3)
         entities.forEach { entity ->
             GlStateManager.pushMatrix()
 
-            val renderPos = ModItems.manipulator.nodePosition(entity, partialTicks) + tinyOffset
+            val renderPos = entity.positionVector + tinyOffset
             GlStateManager.translate(renderPos.x, renderPos.y, renderPos.z)
-
-            if(!axisAligned) {
-                val facing = ModItems.manipulator.nodeLookNonNormalized(entity, partialTicks).normalize()
-                val renderRotationPitch = facing.rotationPitch()
-                val renderRotationYaw = facing.rotationYaw()
-                GlStateManager.rotate(renderRotationYaw, 0f, -1f, 0f)
-                GlStateManager.rotate(renderRotationPitch, 1f, 0f, 0f)
-            }
 
             draw(entity)
 
@@ -108,11 +97,11 @@ object NodeRenderer {
         val tessellator = Tessellator.getInstance()
         val vb = tessellator.buffer
 
-        val relativePosition = ModItems.manipulator.nodePosition(node, partialTicks) -
-                Minecraft.getMinecraft().player.renderPosition(partialTicks)
+        val relativePosition = node.positionVector - Minecraft.getMinecraft().player.renderPosition(partialTicks)
         val radius = node.visualRadius(relativePosition.lengthVector())
 
         val steps = 12
+        GlStateManager.glLineWidth(4f)
 
         vb.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR)
         for (step in 0..steps) {
@@ -149,66 +138,18 @@ object NodeRenderer {
         val tessellator = Tessellator.getInstance()
         val vb = tessellator.buffer
 
+        GlStateManager.glLineWidth(4f)
         vb.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR)
         vb.pos(vec(0, 0, 0)).color(Color.blue).endVertex()
         vb.pos(vec(0, 0, 1)).color(Color.blue).endVertex()
         tessellator.draw()
-    }
 
-    fun renderNodeAxisAligned(node: EntityNode, partialTicks: Float) {
-        val tessellator = Tessellator.getInstance()
-        val vb = tessellator.buffer
-
-        if(ModItems.manipulator.draggingNode == node) {
-            if(ModItems.manipulator.draggingDistance != null) {
-                GL11.glEnable(GL11.GL_LINE_STIPPLE)
-                GL11.glLineStipple(1, 0b1111000011110000.toShort())
-
-                vb.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR)
-                vb.pos(vec(0, 0, 0)).color(Color.gray).endVertex()
-                vb.pos(vec(0, 0, -50)).color(Color.gray).endVertex()
-                vb.pos(vec(0, 0, 0)).color(Color.gray).endVertex()
-                vb.pos(vec(0, 0, 50)).color(Color.gray).endVertex()
-                vb.pos(vec(0, 0, 0)).color(Color.gray).endVertex()
-                vb.pos(vec(0, -50, 0)).color(Color.gray).endVertex()
-                vb.pos(vec(0, 0, 0)).color(Color.gray).endVertex()
-                vb.pos(vec(0, 50, 0)).color(Color.gray).endVertex()
-                vb.pos(vec(0, 0, 0)).color(Color.gray).endVertex()
-                vb.pos(vec(-50, 0, 0)).color(Color.gray).endVertex()
-                vb.pos(vec(0, 0, 0)).color(Color.gray).endVertex()
-                vb.pos(vec(50, 0, 0)).color(Color.gray).endVertex()
-                tessellator.draw()
-                GL11.glDisable(GL11.GL_LINE_STIPPLE)
-            }
-            val rotationNormal = ModItems.manipulator.rotationNormal
-            if(rotationNormal != null) {
-                GlStateManager.enableBlend()
-                val planeColor = Color(64, 64, 64, 128)
-                val unitX = (rotationNormal cross vec(0, 1, 0))
-                        .let {if(it.lengthVector() == 0.0) vec(1, 0, 0) else it}
-                        .normalize()
-                val unitZ = (rotationNormal cross unitX).normalize()
-
-                vb.begin(GL11.GL_TRIANGLE_FAN, DefaultVertexFormats.POSITION_COLOR)
-                vb.pos(vec(0, 0, 0)).color(planeColor).endVertex()
-                val steps = 12
-                for (step in 0..steps) {
-                    val angle = (step / steps.toDouble()) * (Math.PI * 2)
-                    vb.pos(unitX * (Math.cos(angle)) +
-                            unitZ * (Math.sin(angle))
-                    ).color(planeColor).endVertex()
+        node.node.handles.forEach {
+            if(ModItems.manipulator.manipulatingNode == node) {
+                it.draw()
+                if(ModItems.manipulator.manipulatingHandle == it) {
+                    it.drawInUse()
                 }
-                tessellator.draw()
-                GlStateManager.disableBlend()
-
-                val intersection = ModItems.manipulator.nodeLookNonNormalized(node, partialTicks)
-                GL11.glEnable(GL11.GL_LINE_STIPPLE)
-                GL11.glLineStipple(1, 0b1111000011110000.toShort())
-                vb.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR)
-                vb.pos(vec(0, 0, 0)).color(Color.gray).endVertex()
-                vb.pos(intersection).color(Color.gray).endVertex()
-                tessellator.draw()
-                GL11.glDisable(GL11.GL_LINE_STIPPLE)
             }
         }
     }
