@@ -24,15 +24,7 @@ fun EntityPlayer.rayTraceNodes(partialTicks: Float): NodeTraceResult? {
         // length isn't technically the distance from the node to us, but it's close for every entity that matters
         val radius = entity.visualRadius(length)
         val results = mutableListOf<NodeTraceResult>()
-        if(relative.lengthSquared() < radius * radius) results.add(NodeTraceResult(entity, null, length))
-
-        if(ModItems.manipulator.manipulatingNode == entity) {
-            val lookRay = Ray(origin-entity.positionVector, lookNormal)
-            entity.node.handles.forEach {
-                val dist = it.traceHandle(lookRay)
-                if (dist > 0) results.add(NodeTraceResult(entity, it, dist))
-            }
-        }
+        if(relative.lengthSquared() < radius * radius) results.add(NodeTraceResult(entity, length))
 
         results
     }
@@ -44,4 +36,4 @@ fun EntityNode.visualRadius(distance: Double): Double {
     return max(1/8.0, distance/30) * if(this == NodeInteractionClient.nodeMouseOver?.entity) 1.5 else 1.0
 }
 
-data class NodeTraceResult(val entity: EntityNode, val handle: NodeManipulatorHandle?, val distance: Double)
+data class NodeTraceResult(val entity: EntityNode, val distance: Double)

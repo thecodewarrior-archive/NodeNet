@@ -7,6 +7,8 @@ import com.thecodewarrior.nodenet.common.entity.EntityNode
 import com.thecodewarrior.nodenet.common.item.INodeInteractingItem
 import com.thecodewarrior.nodenet.common.item.INodeVisibleItem
 import com.thecodewarrior.nodenet.common.item.ModItems
+import com.thecodewarrior.nodenet.drawing
+import com.thecodewarrior.nodenet.edges
 import com.thecodewarrior.nodenet.renderPosition
 import com.thecodewarrior.nodenet.rotationPitch
 import com.thecodewarrior.nodenet.rotationYaw
@@ -14,6 +16,7 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.client.renderer.Tessellator
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats
+import net.minecraft.util.math.AxisAlignedBB
 import net.minecraft.util.math.Vec3d
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
@@ -32,13 +35,6 @@ object NodeWorldRenderer {
         val tessellator = Tessellator.getInstance()
         val vb = tessellator.buffer
 
-        ModItems.manipulator.manipulatingHandle?.update(e.partialTicks)
-
-        GlStateManager.depthFunc(GL11.GL_GREATER)
-        GlStateManager.depthMask(false)
-        drawForEach(entities, e.partialTicks) { entity ->
-            renderNodeAlways(entity, e.partialTicks, true)
-        }
         GlStateManager.depthFunc(GL11.GL_ALWAYS)
         vb.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR)
         entities.forEach { entity ->
@@ -52,11 +48,15 @@ object NodeWorldRenderer {
         }
         tessellator.draw()
         GlStateManager.depthMask(true)
-        GlStateManager.depthFunc(GL11.GL_LEQUAL)
         drawForEach(entities, e.partialTicks) { entity ->
-            renderNodeAlways(entity, e.partialTicks, false)
+            if(NodeInteractionClient.nodeMouseOver?.entity == entity) {
+                GlStateManager.depthFunc(GL11.GL_ALWAYS)
+            } else {
+                GlStateManager.depthFunc(GL11.GL_LEQUAL)
+            }
             renderNode(entity, e.partialTicks)
         }
+        GlStateManager.depthFunc(GL11.GL_LEQUAL)
 
         if(player.heldItemMainhand.item == ModItems.connector) {
             ModItems.connector.connectingFromNode?.let { e.world.getEntityByID(it) }?.let { source ->
@@ -95,65 +95,23 @@ object NodeWorldRenderer {
         }
     }
 
-    fun renderNodeAlways(node: EntityNode, partialTicks: Float, darker: Boolean) {
-        val tessellator = Tessellator.getInstance()
-        val vb = tessellator.buffer
+    fun renderNode(node: EntityNode, partialTicks: Float) {
 
         val relativePosition = node.positionVector - Minecraft.getMinecraft().player.renderPosition(partialTicks)
         val radius = node.visualRadius(relativePosition.lengthVector())
+        val c = Color.RED.darker()
 
-        val steps = 12
-        GlStateManager.glLineWidth(4f)
-
-        vb.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR)
-        for (step in 0..steps) {
-            val angle = (step / steps.toDouble()) * (Math.PI * 2)
-            val x = Math.cos(angle) * radius
-            val y = Math.sin(angle) * radius
-            val z = 0
-            vb.pos(vec(x, y, z)).color(if(darker) Color.blue.darker() else Color.blue).endVertex()
-        }
-        tessellator.draw()
-
-        vb.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR)
-        for (step in 0..steps) {
-            val angle = (step / steps.toDouble()) * (Math.PI * 2)
-            val x = Math.cos(angle) * radius
-            val y = 0
-            val z = Math.sin(angle) * radius
-            vb.pos(vec(x, y, z)).color(if(darker) Color.green.darker() else Color.green).endVertex()
-        }
-        tessellator.draw()
-
-        vb.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR)
-        for (step in 0..steps) {
-            val angle = (step / steps.toDouble()) * (Math.PI * 2)
-            val x = 0
-            val y = Math.cos(angle) * radius
-            val z = Math.sin(angle) * radius
-            vb.pos(vec(x, y, z)).color(if(darker) Color.red.darker() else Color.red).endVertex()
-        }
-        tessellator.draw()
-    }
-
-    fun renderNode(node: EntityNode, partialTicks: Float) {
-        val tessellator = Tessellator.getInstance()
-        val vb = tessellator.buffer
-
-        GlStateManager.glLineWidth(4f)
-//        vb.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR)
-//        vb.pos(vec(0, 0, 0)).color(Color.blue).endVertex()
-//        vb.pos(vec(0, 0, 1)).color(Color.blue).endVertex()
-//        tessellator.draw()
-
-        node.node.handles.forEach {
-            if(ModItems.manipulator.manipulatingNode == node) {
-                it.draw()
-                if(ModItems.manipulator.manipulatingHandle == it) {
-                    it.drawInUse()
-                }
+        drawing { tessellator, vb ->
+            GlStateManager.glLineWidth(2f)
+            GlStateManager.color(c.red/255f, c.green/255f, c.blue/255f, c.alpha/255f)
+            vb.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION)
+            AxisAlignedBB(vec(-radius, -radius, -radius), vec(radius, radius, radius)).edges.forEach {
+                vb.pos(it.first).endVertex()
+                vb.pos(it.second).endVertex()
             }
+            tessellator.draw()
         }
+
         node.node.renderer?.render()
     }
 }

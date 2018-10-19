@@ -1,31 +1,21 @@
 package com.thecodewarrior.nodenet.common.entity
 
-import com.sun.deploy.util.GeneralUtil
 import com.teamwizardry.librarianlib.features.base.entity.EntityMod
 import com.teamwizardry.librarianlib.features.kotlin.readTag
 import com.teamwizardry.librarianlib.features.kotlin.writeTag
-import com.teamwizardry.librarianlib.features.math.Matrix4
 import com.teamwizardry.librarianlib.features.network.PacketHandler
-import com.teamwizardry.librarianlib.features.saving.AbstractSaveHandler
 import com.teamwizardry.librarianlib.features.saving.Save
-import com.teamwizardry.librarianlib.features.saving.SaveInPlace
-import com.thecodewarrior.nodenet.common.item.ItemNodeManipulator
+import com.teamwizardry.librarianlib.features.utilities.client.ClientRunnable
 import com.thecodewarrior.nodenet.common.item.ModItems
 import com.thecodewarrior.nodenet.common.network.PacketMoveNode
 import com.thecodewarrior.nodenet.common.network.PacketRotateNode
 import com.thecodewarrior.nodenet.common.node.Node
 import com.thecodewarrior.nodenet.getEntityByUUID
 import io.netty.buffer.ByteBuf
-import net.minecraft.entity.Entity
-import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.nbt.NBTTagCompound
 import net.minecraft.util.math.AxisAlignedBB
 import net.minecraft.util.math.Vec3d
-import net.minecraft.util.text.ITextComponent
-import net.minecraft.util.text.TextComponentString
 import net.minecraft.world.World
-import net.minecraftforge.fml.common.network.NetworkRegistry.TargetPoint
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage
 import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData
 import net.minecraftforge.fml.relauncher.Side
 import net.minecraftforge.fml.relauncher.SideOnly
@@ -57,7 +47,11 @@ class EntityNode(worldIn: World): EntityMod(worldIn), IEntityAdditionalSpawnData
     }
 
     override fun onUpdate() {
-        if(world.isRemote && ModItems.manipulator.manipulatingNode == this) {
+        node.serverTick()
+        ClientRunnable.run {
+            node.clientTick()
+        }
+        if(world.isRemote && ModItems.manipulator.draggingNode == this) {
             PacketHandler.NETWORK.sendToServer(PacketMoveNode(this.entityId, this.positionVector))
             PacketHandler.NETWORK.sendToServer(PacketRotateNode(this.entityId, this.rotationPitch, this.rotationYaw))
         }

@@ -7,6 +7,8 @@ import net.minecraft.client.renderer.BufferBuilder
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.client.renderer.Tessellator
 import net.minecraft.entity.Entity
+import net.minecraft.util.EnumFacing
+import net.minecraft.util.math.AxisAlignedBB
 import net.minecraft.util.math.MathHelper
 import net.minecraft.util.math.Vec3d
 import net.minecraft.world.World
@@ -52,3 +54,34 @@ fun Vec3d.rotationPitch(): Float {
 inline fun drawing(callback: (tessellator: Tessellator, vb: BufferBuilder) -> Unit) {
     callback(Tessellator.getInstance(), Tessellator.getInstance().buffer)
 }
+
+val AxisAlignedBB.edges: List<Pair<Vec3d, Vec3d>>
+    get() {
+        return listOf(
+            vec(0, 0, 0), vec(1, 0, 0),
+            vec(0, 1, 0), vec(1, 1, 0),
+            vec(0, 0, 1), vec(1, 0, 1),
+            vec(0, 1, 1), vec(1, 1, 1),
+
+            vec(0, 0, 0), vec(0, 1, 0),
+            vec(1, 0, 0), vec(1, 1, 0),
+            vec(0, 0, 1), vec(0, 1, 1),
+            vec(1, 0, 1), vec(1, 1, 1),
+
+            vec(0, 0, 0), vec(0, 0, 1),
+            vec(0, 1, 0), vec(0, 1, 1),
+            vec(1, 0, 0), vec(1, 0, 1),
+            vec(1, 1, 0), vec(1, 1, 1)
+        ).map {
+            vec(
+                minX + (maxX-minX) * it.x,
+                minY + (maxY-minY) * it.y,
+                minZ + (maxZ-minZ) * it.z
+            )
+        }.chunked(2).map { (from, to) -> from to to }
+    }
+
+val EnumFacing.frontOffset: Vec3d
+    get() {
+        return vec(frontOffsetX, frontOffsetY, frontOffsetZ)
+    }
