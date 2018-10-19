@@ -26,21 +26,40 @@ open class Node(val entity: EntityNode) {
         null
     }
 
-    var powered = false
+    var signalBacking: Signal? = null
+    val signal: Signal
+        get() {
+            if(signalBacking == null) {
+                signalBacking = computeSignal()
+            }
+            return signalBacking!!
+        }
+
+    fun computeSignal(): Signal {
+        val pos = BlockPos(floor(entity.posX), floor(entity.posY), floor(entity.posZ))
+        return RedstoneSignal(entity.world.isBlockPowered(pos))
+//        return NoSignal
+    }
+    fun gatherInputs(): List<Signal> {
+        return entity.connectedEntities().map { it.node.signal }
+    }
 
     fun clientTick() {
-        if(powered) {
+        if(gatherInputs().any { it == RedstoneSignal.ON }) {
             entity.world.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, entity.posX, entity.posY, entity.posZ, 0.0, 0.1, 0.0)
         }
     }
 
     fun serverTick() {
-        val pos = BlockPos(floor(entity.posX), floor(entity.posY), floor(entity.posZ))
-        if(entity.world.isBlockPowered(pos)) {
-            powered = true
-            entity.connectedEntities().forEach {
-                it.node.powered = true
-            }
-        }
+    }
+
+}
+
+interface Signal
+object NoSignal: Signal
+data class RedstoneSignal(val powered: Boolean): Signal {
+    companion object {
+        val ON = RedstoneSignal(true)
+        val OFF = RedstoneSignal(false)
     }
 }

@@ -47,6 +47,7 @@ class EntityNode(worldIn: World): EntityMod(worldIn), IEntityAdditionalSpawnData
     }
 
     override fun onUpdate() {
+        node.signalBacking = null
         node.serverTick()
         ClientRunnable.run {
             node.clientTick()
@@ -55,7 +56,7 @@ class EntityNode(worldIn: World): EntityMod(worldIn), IEntityAdditionalSpawnData
             PacketHandler.NETWORK.sendToServer(PacketMoveNode(this.entityId, this.positionVector))
             PacketHandler.NETWORK.sendToServer(PacketRotateNode(this.entityId, this.rotationPitch, this.rotationYaw))
         }
-        node.powered = false
+        node.signalBacking = null
     }
 
     override fun canBeCollidedWith(): Boolean {
