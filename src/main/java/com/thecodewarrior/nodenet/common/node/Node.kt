@@ -26,13 +26,21 @@ open class Node(val entity: EntityNode) {
         null
     }
 
+    var powered = false
+
     fun clientTick() {
-        val pos = BlockPos(floor(entity.posX), floor(entity.posY), floor(entity.posZ))
-        if(entity.world.getStrongPower(pos) > 0) {
+        if(powered) {
             entity.world.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, entity.posX, entity.posY, entity.posZ, 0.0, 0.1, 0.0)
         }
     }
 
     fun serverTick() {
+        val pos = BlockPos(floor(entity.posX), floor(entity.posY), floor(entity.posZ))
+        if(entity.world.isBlockPowered(pos)) {
+            powered = true
+            entity.connectedEntities().forEach {
+                it.node.powered = true
+            }
+        }
     }
 }

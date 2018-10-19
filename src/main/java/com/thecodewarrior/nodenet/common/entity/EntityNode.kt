@@ -55,6 +55,7 @@ class EntityNode(worldIn: World): EntityMod(worldIn), IEntityAdditionalSpawnData
             PacketHandler.NETWORK.sendToServer(PacketMoveNode(this.entityId, this.positionVector))
             PacketHandler.NETWORK.sendToServer(PacketRotateNode(this.entityId, this.rotationPitch, this.rotationYaw))
         }
+        node.powered = false
     }
 
     override fun canBeCollidedWith(): Boolean {
@@ -89,6 +90,10 @@ class EntityNode(worldIn: World): EntityMod(worldIn), IEntityAdditionalSpawnData
         connections.remove(other.persistentID)
         cached.remove(other.persistentID)
         this.dispatchEntityToNearbyPlayers()
+
+        other.connections.remove(this.persistentID)
+        other.cached.remove(this.persistentID)
+        other.dispatchEntityToNearbyPlayers()
     }
 
     fun canConnectTo(other: EntityNode): Boolean {
@@ -99,6 +104,10 @@ class EntityNode(worldIn: World): EntityMod(worldIn), IEntityAdditionalSpawnData
         connections.add(other.persistentID)
         cached[other.persistentID] = other.entityId
         this.dispatchEntityToNearbyPlayers()
+
+        other.connections.add(this.persistentID)
+        other.cached[this.persistentID] = this.entityId
+        other.dispatchEntityToNearbyPlayers()
     }
 
     fun connectedEntities(): List<EntityNode> {

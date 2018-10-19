@@ -41,8 +41,10 @@ object NodeWorldRenderer {
             val connected = entity.connectedEntities()
             if(connected.isNotEmpty()) {
                 connected.forEach {
-                    vb.pos(entity.positionVector).color(Color.cyan).endVertex()
-                    vb.pos(it.positionVector).color(Color.cyan).endVertex()
+                    if(entity.hashCode() <= it.hashCode()) { // only render line for one or the other half
+                        vb.pos(entity.positionVector).color(Color.cyan).endVertex()
+                        vb.pos(it.positionVector).color(Color.cyan).endVertex()
+                    }
                 }
             }
         }
