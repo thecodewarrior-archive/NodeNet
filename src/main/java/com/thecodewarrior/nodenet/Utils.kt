@@ -51,6 +51,10 @@ fun Vec3d.rotationPitch(): Float {
     return -Math.toDegrees(Math.asin(this.y)).toFloat()
 }
 
+fun Vec3d.snapToGrid(step: Double): Vec3d {
+    return vec(x - x % step, y - y % step, z - z % step)
+}
+
 inline fun drawing(callback: (tessellator: Tessellator, vb: BufferBuilder) -> Unit) {
     callback(Tessellator.getInstance(), Tessellator.getInstance().buffer)
 }

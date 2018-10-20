@@ -11,13 +11,16 @@ import java.util.function.Function
 
 class BasicNodeType(
     name: ResourceLocation,
+    override val positioningInset: Double,
     private val nodeConstructor: (EntityNode) -> Node,
     rendererConstructor: () -> (Node) -> NodeRenderer
 ): NodeType() {
     constructor(name: ResourceLocation,
+        positioningInset: Double,
         nodeConstructor: Function<EntityNode, Node>,
         rendererConstructor: Supplier<Function<Node, NodeRenderer>>):
         this(name,
+            positioningInset,
             { nodeConstructor.apply(it) },
             { rendererConstructor.get().let { con -> { con.apply(it) } } }
         )

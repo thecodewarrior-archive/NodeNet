@@ -9,7 +9,9 @@ import com.teamwizardry.librarianlib.features.network.PacketHandler
 import com.thecodewarrior.nodenet.client.NodeTraceResult
 import com.thecodewarrior.nodenet.common.entity.EntityNode
 import com.thecodewarrior.nodenet.common.network.PacketDeleteNode
+import com.thecodewarrior.nodenet.common.node.NodeType
 import com.thecodewarrior.nodenet.frontOffset
+import com.thecodewarrior.nodenet.snapToGrid
 import net.minecraft.client.Minecraft
 
 class ItemNodeManipulator: ItemMod("manipulator"), INodeInteractingItem {
@@ -42,7 +44,8 @@ class ItemNodeManipulator: ItemMod("manipulator"), INodeInteractingItem {
             val eyes = player.getPositionEyes(partialTicks)
             val tip = eyes + player.getLook(partialTicks) * 5
             val rtr = player.world.rayTraceBlocks(eyes, tip)
-            val targetPos = rtr?.let { it.hitVec + it.sideHit.frontOffset * -0.0625 } ?: tip
+            val offset = NodeType.REGISTRY.getValue(draggingNode.type)?.positioningInset ?: 0.0
+            val targetPos = rtr?.let { it.hitVec.snapToGrid(1/16.0) + it.sideHit.frontOffset * offset } ?: tip
             draggingNode.setPosition(targetPos.x, targetPos.y, targetPos.z)
         }
     }

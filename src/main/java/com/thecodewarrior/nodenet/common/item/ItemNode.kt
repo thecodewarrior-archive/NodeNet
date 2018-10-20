@@ -1,12 +1,17 @@
 package com.thecodewarrior.nodenet.common.item
 
 import com.teamwizardry.librarianlib.features.base.item.ItemMod
+import com.teamwizardry.librarianlib.features.helpers.vec
 import com.teamwizardry.librarianlib.features.kotlin.NBT
 import com.teamwizardry.librarianlib.features.kotlin.nbt
+import com.teamwizardry.librarianlib.features.kotlin.plus
+import com.teamwizardry.librarianlib.features.kotlin.times
 import com.teamwizardry.librarianlib.features.kotlin.toRl
 import com.thecodewarrior.nodenet.common.entity.EntityNode
 import com.thecodewarrior.nodenet.common.node.Node
 import com.thecodewarrior.nodenet.common.node.NodeType
+import com.thecodewarrior.nodenet.frontOffset
+import com.thecodewarrior.nodenet.snapToGrid
 import net.minecraft.creativetab.CreativeTabs
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.item.ItemStack
@@ -16,6 +21,7 @@ import net.minecraft.util.EnumFacing
 import net.minecraft.util.EnumHand
 import net.minecraft.util.NonNullList
 import net.minecraft.util.math.BlockPos
+import net.minecraft.util.math.Vec3d
 import net.minecraft.world.World
 
 class ItemNode: ItemMod("node"), INodeVisibleItem {
@@ -36,8 +42,11 @@ class ItemNode: ItemMod("node"), INodeVisibleItem {
 
     override fun onItemUse(player: EntityPlayer, worldIn: World, pos: BlockPos, hand: EnumHand, facing: EnumFacing, hitX: Float, hitY: Float, hitZ: Float): EnumActionResult {
         if(!worldIn.isRemote) {
-            val entity = EntityNode(worldIn, pos.x + hitX.toDouble(), pos.y + hitY.toDouble(), pos.z + hitZ.toDouble(),
-                (player.getHeldItem(hand).nbt["type"] as NBTTagString).string.toRl()
+            val type = (player.getHeldItem(hand).nbt["type"] as NBTTagString).string.toRl()
+            val offset = NodeType.REGISTRY.getValue(type)?.positioningInset ?: 0.0
+            val spawnPos = Vec3d(pos) + vec(hitX, hitY, hitZ).snapToGrid(1/16.0) + facing.frontOffset * offset
+            val entity = EntityNode(worldIn, spawnPos.x, spawnPos.y, spawnPos.z,
+                type
             )
             worldIn.spawnEntity(entity)
         }

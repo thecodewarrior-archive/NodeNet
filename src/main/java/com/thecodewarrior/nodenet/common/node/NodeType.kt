@@ -9,6 +9,7 @@ import net.minecraftforge.registries.IForgeRegistryEntry
 import java.util.function.Supplier
 
 abstract class NodeType: IForgeRegistryEntry.Impl<NodeType>() {
+    abstract val positioningInset: Double
     @SideOnly(Side.CLIENT)
     abstract fun createRenderer(node: Node): NodeRenderer
     abstract fun createNode(entity: EntityNode): Node

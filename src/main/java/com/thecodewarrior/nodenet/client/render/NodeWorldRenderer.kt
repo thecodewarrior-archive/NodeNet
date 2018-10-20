@@ -1,6 +1,7 @@
 package com.thecodewarrior.nodenet.client.render
 
 import com.teamwizardry.librarianlib.core.client.ClientTickHandler
+import com.teamwizardry.librarianlib.core.client.ClientTickHandler.partialTicks
 import com.teamwizardry.librarianlib.features.forgeevents.CustomWorldRenderEvent
 import com.teamwizardry.librarianlib.features.helpers.vec
 import com.teamwizardry.librarianlib.features.kotlin.*
@@ -12,13 +13,17 @@ import com.thecodewarrior.nodenet.common.item.ModItems
 import com.thecodewarrior.nodenet.common.item.ModItems.node
 import com.thecodewarrior.nodenet.drawing
 import com.thecodewarrior.nodenet.edges
+import com.thecodewarrior.nodenet.glMatrix
 import com.thecodewarrior.nodenet.renderPosition
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GlStateManager
+import net.minecraft.client.renderer.RenderHelper
 import net.minecraft.client.renderer.Tessellator
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats
 import net.minecraft.util.math.AxisAlignedBB
 import net.minecraft.util.math.MathHelper
+import net.minecraft.util.math.RayTraceResult
+import net.minecraftforge.client.ForgeHooksClient
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import org.lwjgl.opengl.GL11
@@ -31,20 +36,29 @@ object NodeWorldRenderer {
     fun renderWorld(e: CustomWorldRenderEvent) {
         val player = Minecraft.getMinecraft().player
         val playerLook = player.lookVec
-        val connectShowThreshold = MathHelper.cos(Math.toRadians(50.0).toFloat())
 
-        if(player.heldItemMainhand.item !is INodeVisibleItem) return
+        if(player.heldEquipment.all { it.item !is INodeVisibleItem }) return
         val entities = e.world.getEntities(EntityNode::class.java, { true })
+
+        if(player.heldEquipment.any { it.item == ModItems.manipulator } &&
+            Minecraft.getMinecraft().objectMouseOver?.typeOfHit != RayTraceResult.Type.BLOCK) {
+            renderBlockMouseOver()
+        }
 
         val tessellator = Tessellator.getInstance()
         val vb = tessellator.buffer
 
+        val showAngle =
+            if(player.heldEquipment.any { it.item == ModItems.connector })
+                50.0
+            else
+                30.0
+        val showThreshold = MathHelper.cos(Math.toRadians(showAngle).toFloat())
+        fun shouldShow(entity: EntityNode, threshold: Float): Boolean {
+            return (entity.positionVector - player.getPositionEyes(e.partialTicks)).normalize() dot playerLook > threshold
+        }
         drawForEach(entities, e.partialTicks) { entity ->
-            if (NodeInteractionClient.nodeMouseOver?.entity == entity ||
-                (player.heldEquipment.any { it.item == ModItems.connector } &&
-                    (entity.positionVector - player.positionVector).normalize() dot playerLook > connectShowThreshold
-                    )
-            ) {
+            if (NodeInteractionClient.nodeMouseOver?.entity == entity || shouldShow(entity, showThreshold)) {
                 GlStateManager.depthFunc(GL11.GL_ALWAYS)
             } else {
                 GlStateManager.depthFunc(GL11.GL_LEQUAL)
@@ -57,13 +71,15 @@ object NodeWorldRenderer {
             val connected = entity.connectedEntities()
             if(connected.isNotEmpty()) {
                 connected.forEach {
-                    renderLine(entity, it)
+                    if(shouldShow(entity, showThreshold) || shouldShow(it, showThreshold)) {
+                        renderLine(entity, it)
+                    }
                 }
             }
         }
         tessellator.draw()
 
-        if(player.heldItemMainhand.item == ModItems.connector) {
+        if(player.heldEquipment.any { it.item == ModItems.connector }) {
             ModItems.connector.connectingFromNode?.let { e.world.getEntityByID(it) }?.let { source ->
                 val startPos = source.positionVector
 
@@ -84,6 +100,25 @@ object NodeWorldRenderer {
         }
 
         GlStateManager.depthFunc(GL11.GL_LEQUAL)
+    }
+
+    fun renderBlockMouseOver() {
+        val mc = Minecraft.getMinecraft()
+        val player = mc.player
+        val eyes = player.getPositionEyes(partialTicks)
+        val tip = eyes + player.getLook(partialTicks) * 5
+        val rtr = player.world.rayTraceBlocks(eyes, tip)
+        if(rtr?.typeOfHit == RayTraceResult.Type.BLOCK) {
+            glMatrix {
+                val playerPos = player.renderPosition(partialTicks)
+                GlStateManager.translate(playerPos.x, playerPos.y, playerPos.z)
+                GlStateManager.disableAlpha()
+                if (!ForgeHooksClient.onDrawBlockHighlight(mc.renderGlobal, player, rtr, 0, partialTicks))
+                    mc.renderGlobal.drawSelectionBox(player, rtr, 0, partialTicks)
+                GlStateManager.enableAlpha()
+            }
+        }
+
     }
 
     fun renderLine(from: EntityNode, to: EntityNode) {
