@@ -1,23 +1,21 @@
-package com.thecodewarrior.nodenet.client
+package com.thecodewarrior.nodenet.client.render
 
 import com.teamwizardry.librarianlib.features.forgeevents.CustomWorldRenderEvent
 import com.teamwizardry.librarianlib.features.helpers.vec
 import com.teamwizardry.librarianlib.features.kotlin.*
+import com.thecodewarrior.nodenet.client.NodeInteractionClient
+import com.thecodewarrior.nodenet.client.visualRadius
 import com.thecodewarrior.nodenet.common.entity.EntityNode
-import com.thecodewarrior.nodenet.common.item.INodeInteractingItem
 import com.thecodewarrior.nodenet.common.item.INodeVisibleItem
 import com.thecodewarrior.nodenet.common.item.ModItems
 import com.thecodewarrior.nodenet.drawing
 import com.thecodewarrior.nodenet.edges
 import com.thecodewarrior.nodenet.renderPosition
-import com.thecodewarrior.nodenet.rotationPitch
-import com.thecodewarrior.nodenet.rotationYaw
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.client.renderer.Tessellator
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats
 import net.minecraft.util.math.AxisAlignedBB
-import net.minecraft.util.math.Vec3d
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import org.lwjgl.opengl.GL11
@@ -35,6 +33,14 @@ object NodeWorldRenderer {
         val tessellator = Tessellator.getInstance()
         val vb = tessellator.buffer
 
+        drawForEach(entities, e.partialTicks) { entity ->
+            if (NodeInteractionClient.nodeMouseOver?.entity == entity) {
+                GlStateManager.depthFunc(GL11.GL_ALWAYS)
+            } else {
+                GlStateManager.depthFunc(GL11.GL_LEQUAL)
+            }
+            renderNode(entity, e.partialTicks)
+        }
         GlStateManager.depthFunc(GL11.GL_ALWAYS)
         vb.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR)
         entities.forEach { entity ->
@@ -49,16 +55,6 @@ object NodeWorldRenderer {
             }
         }
         tessellator.draw()
-        GlStateManager.depthMask(true)
-        drawForEach(entities, e.partialTicks) { entity ->
-            if(NodeInteractionClient.nodeMouseOver?.entity == entity) {
-                GlStateManager.depthFunc(GL11.GL_ALWAYS)
-            } else {
-                GlStateManager.depthFunc(GL11.GL_LEQUAL)
-            }
-            renderNode(entity, e.partialTicks)
-        }
-        GlStateManager.depthFunc(GL11.GL_LEQUAL)
 
         if(player.heldItemMainhand.item == ModItems.connector) {
             ModItems.connector.connectingFromNode?.let { e.world.getEntityByID(it) }?.let { source ->
@@ -98,22 +94,6 @@ object NodeWorldRenderer {
     }
 
     fun renderNode(node: EntityNode, partialTicks: Float) {
-
-        val relativePosition = node.positionVector - Minecraft.getMinecraft().player.renderPosition(partialTicks)
-        val radius = node.visualRadius(relativePosition.lengthVector())
-        val c = Color.RED.darker()
-
-        drawing { tessellator, vb ->
-            GlStateManager.glLineWidth(2f)
-            GlStateManager.color(c.red/255f, c.green/255f, c.blue/255f, c.alpha/255f)
-            vb.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION)
-            AxisAlignedBB(vec(-radius, -radius, -radius), vec(radius, radius, radius)).edges.forEach {
-                vb.pos(it.first).endVertex()
-                vb.pos(it.second).endVertex()
-            }
-            tessellator.draw()
-        }
-
-        node.node.renderer?.render()
+        node.node.renderer.render()
     }
 }

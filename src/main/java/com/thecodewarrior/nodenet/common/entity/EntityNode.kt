@@ -2,6 +2,7 @@ package com.thecodewarrior.nodenet.common.entity
 
 import com.teamwizardry.librarianlib.features.base.entity.EntityMod
 import com.teamwizardry.librarianlib.features.kotlin.readTag
+import com.teamwizardry.librarianlib.features.kotlin.toRl
 import com.teamwizardry.librarianlib.features.kotlin.writeTag
 import com.teamwizardry.librarianlib.features.network.PacketHandler
 import com.teamwizardry.librarianlib.features.saving.Save
@@ -10,9 +11,11 @@ import com.thecodewarrior.nodenet.common.item.ModItems
 import com.thecodewarrior.nodenet.common.network.PacketMoveNode
 import com.thecodewarrior.nodenet.common.network.PacketRotateNode
 import com.thecodewarrior.nodenet.common.node.Node
+import com.thecodewarrior.nodenet.common.node.NodeType
 import com.thecodewarrior.nodenet.getEntityByUUID
 import io.netty.buffer.ByteBuf
 import net.minecraft.nbt.NBTTagCompound
+import net.minecraft.util.ResourceLocation
 import net.minecraft.util.math.AxisAlignedBB
 import net.minecraft.util.math.Vec3d
 import net.minecraft.world.World
@@ -31,23 +34,22 @@ class EntityNode(worldIn: World): EntityMod(worldIn), IEntityAdditionalSpawnData
             }
         }
     var cached = mutableMapOf<UUID, Int?>()
-
-    init {
-        println("Yay my dudes!")
-    }
-
+    @Save
+    var type: ResourceLocation = "missingno".toRl()
     var node = Node(this)
 
     override fun getEntityBoundingBox(): AxisAlignedBB {
         return AxisAlignedBB(Vec3d.ZERO, Vec3d.ZERO)
     }
 
-    constructor(worldIn: World, x: Double, y: Double, z: Double): this(worldIn) {
+    constructor(worldIn: World, x: Double, y: Double, z: Double, type: ResourceLocation): this(worldIn) {
         setPosition(x, y, z)
+        this.type = type
+
+        node = NodeType.REGISTRY.getValue(type)!!.createNode(this)
     }
 
     override fun onUpdate() {
-        node.signalBacking = null
         node.serverTick()
         ClientRunnable.run {
             node.clientTick()
@@ -56,7 +58,6 @@ class EntityNode(worldIn: World): EntityMod(worldIn), IEntityAdditionalSpawnData
             PacketHandler.NETWORK.sendToServer(PacketMoveNode(this.entityId, this.positionVector))
             PacketHandler.NETWORK.sendToServer(PacketRotateNode(this.entityId, this.rotationPitch, this.rotationYaw))
         }
-        node.signalBacking = null
     }
 
     override fun canBeCollidedWith(): Boolean {
@@ -66,13 +67,20 @@ class EntityNode(worldIn: World): EntityMod(worldIn), IEntityAdditionalSpawnData
     override fun entityInit() {
         setEntityInvulnerable(true)
         setSize(0f, 0f)
-        this.ignoreFrustumCheck = true
+    }
+
+    override fun readFromNBT(compound: NBTTagCompound) {
+        val oldType = type
+        super.readFromNBT(compound)
+
+        if(type != oldType) {
+            node = NodeType.REGISTRY.getValue(type)!!.createNode(this)
+        }
     }
 
     @SideOnly(Side.CLIENT)
     override fun isInRangeToRenderDist(distance: Double): Boolean {
-        val dist = 256.0
-        return distance < dist * dist
+        return false
     }
 
     override fun readSpawnData(additionalData: ByteBuf) {
