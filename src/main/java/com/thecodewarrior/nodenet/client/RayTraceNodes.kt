@@ -5,7 +5,9 @@ import com.teamwizardry.librarianlib.features.kotlin.minus
 import com.teamwizardry.librarianlib.features.kotlin.times
 import com.thecodewarrior.nodenet.common.entity.EntityNode
 import com.thecodewarrior.nodenet.common.item.ModItems
+import net.minecraft.client.Minecraft
 import net.minecraft.entity.player.EntityPlayer
+import net.minecraft.util.math.MathHelper
 import kotlin.math.max
 
 fun EntityPlayer.rayTraceNodes(partialTicks: Float): NodeTraceResult? {
@@ -31,9 +33,13 @@ fun EntityPlayer.rayTraceNodes(partialTicks: Float): NodeTraceResult? {
     return tracedEntities.minBy { it.distance }
 }
 
+
 fun EntityNode.visualRadius(distance: Double): Double {
+    val fov = Math.toRadians(Minecraft.getMinecraft().gameSettings.fovSetting.toDouble())
+    val worldSize = Math.tan(fov / 2.0)
+    val blockScreenSize = 1/worldSize
     // 30 is a magic number figured out by fiddling with it.
-    return max(1/8.0, distance/30) * if(this == NodeInteractionClient.nodeMouseOver?.entity) 1.5 else 1.0
+    return (1/8.0)/worldSize * if(this == NodeInteractionClient.nodeMouseOver?.entity) 1.5 else 1.0
 }
 
 data class NodeTraceResult(val entity: EntityNode, val distance: Double)
