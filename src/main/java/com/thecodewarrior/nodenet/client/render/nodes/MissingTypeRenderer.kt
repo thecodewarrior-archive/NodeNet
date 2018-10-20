@@ -22,8 +22,9 @@ import java.awt.Color
 import kotlin.math.floor
 
 class MissingTypeRenderer(node: Node): NodeRenderer(node) {
+    override val color: Color
+        get() = Color.MAGENTA
+
     override fun render() {
-        val c = Color.MAGENTA
-        renderDefault(c)
     }
 }

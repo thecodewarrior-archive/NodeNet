@@ -22,8 +22,9 @@ import java.awt.Color
 import kotlin.math.floor
 
 class ParticleGeneratorRenderer(node: Node): NodeRenderer(node) {
+    override val color: Color
+        get() = Color.GREEN.darker()
+
     override fun render() {
-        val c = Color.GREEN.darker()
-        renderDefault(c)
     }
 }

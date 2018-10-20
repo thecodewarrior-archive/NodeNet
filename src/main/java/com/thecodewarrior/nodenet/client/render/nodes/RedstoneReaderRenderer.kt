@@ -22,10 +22,10 @@ import java.awt.Color
 import kotlin.math.floor
 
 class RedstoneReaderRenderer(node: Node): NodeRenderer(node) {
-    override fun render() {
-        val c = if(node.output == RedstoneSignal.ON) Color.RED else Color.RED.darker()
-        renderDefault(c)
+    override val color: Color
+        get() = if(node.output == RedstoneSignal.ON) Color.RED else Color.RED.darker()
 
+    override fun render() {
         val posInBlock = vec(
             node.entity.posX - floor(node.entity.posX),
             node.entity.posY - floor(node.entity.posY),
@@ -35,7 +35,7 @@ class RedstoneReaderRenderer(node: Node): NodeRenderer(node) {
 
         drawing { tessellator, vb ->
             GlStateManager.glLineWidth(2f)
-            GlStateManager.color(c.red/255f, c.green/255f, c.blue/255f, c.alpha/255f)
+            GlStateManager.color(color.red/255f, color.green/255f, color.blue/255f, color.alpha/255f)
             vb.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION)
             AxisAlignedBB(BlockPos.ORIGIN).offset(-posInBlock).edges.forEach {
                 vb.pos(it.first).endVertex()
@@ -47,22 +47,22 @@ class RedstoneReaderRenderer(node: Node): NodeRenderer(node) {
         drawing { tessellator, vb ->
             vb.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR)
 
-            vb.pos(vec(0, 0, 0)).color(c).endVertex()
-            vb.pos(-posInBlock + vec(0, 0, 0)).color(c).endVertex()
-            vb.pos(vec(0, 0, 0)).color(c).endVertex()
-            vb.pos(-posInBlock + vec(0, 0, 1)).color(c).endVertex()
-            vb.pos(vec(0, 0, 0)).color(c).endVertex()
-            vb.pos(-posInBlock + vec(0, 1, 0)).color(c).endVertex()
-            vb.pos(vec(0, 0, 0)).color(c).endVertex()
-            vb.pos(-posInBlock + vec(0, 1, 1)).color(c).endVertex()
-            vb.pos(vec(0, 0, 0)).color(c).endVertex()
-            vb.pos(-posInBlock + vec(1, 0, 0)).color(c).endVertex()
-            vb.pos(vec(0, 0, 0)).color(c).endVertex()
-            vb.pos(-posInBlock + vec(1, 0, 1)).color(c).endVertex()
-            vb.pos(vec(0, 0, 0)).color(c).endVertex()
-            vb.pos(-posInBlock + vec(1, 1, 0)).color(c).endVertex()
-            vb.pos(vec(0, 0, 0)).color(c).endVertex()
-            vb.pos(-posInBlock + vec(1, 1, 1)).color(c).endVertex()
+            vb.pos(vec(0, 0, 0)).color(color).endVertex()
+            vb.pos(-posInBlock + vec(0, 0, 0)).color(color).endVertex()
+            vb.pos(vec(0, 0, 0)).color(color).endVertex()
+            vb.pos(-posInBlock + vec(0, 0, 1)).color(color).endVertex()
+            vb.pos(vec(0, 0, 0)).color(color).endVertex()
+            vb.pos(-posInBlock + vec(0, 1, 0)).color(color).endVertex()
+            vb.pos(vec(0, 0, 0)).color(color).endVertex()
+            vb.pos(-posInBlock + vec(0, 1, 1)).color(color).endVertex()
+            vb.pos(vec(0, 0, 0)).color(color).endVertex()
+            vb.pos(-posInBlock + vec(1, 0, 0)).color(color).endVertex()
+            vb.pos(vec(0, 0, 0)).color(color).endVertex()
+            vb.pos(-posInBlock + vec(1, 0, 1)).color(color).endVertex()
+            vb.pos(vec(0, 0, 0)).color(color).endVertex()
+            vb.pos(-posInBlock + vec(1, 1, 0)).color(color).endVertex()
+            vb.pos(vec(0, 0, 0)).color(color).endVertex()
+            vb.pos(-posInBlock + vec(1, 1, 1)).color(color).endVertex()
 
             tessellator.draw()
         }

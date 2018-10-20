@@ -25,7 +25,7 @@ class ItemNodeConnector: ItemMod("connector"), INodeInteractingItem {
         connectingFromNode = null
 
         if(from != null && node != null && from != node.entity.entityId) {
-            val packet = PacketConnectNodes(from, node.entity.entityId)
+            val packet = PacketConnectNodes(node.entity.entityId, from)
             packet.handle(Minecraft.getMinecraft().player)
             PacketHandler.NETWORK.sendToServer(packet)
         }
