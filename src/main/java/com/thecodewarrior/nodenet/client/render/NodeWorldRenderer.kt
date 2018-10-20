@@ -116,6 +116,7 @@ object NodeWorldRenderer {
                 if (!ForgeHooksClient.onDrawBlockHighlight(mc.renderGlobal, player, rtr, 0, partialTicks))
                     mc.renderGlobal.drawSelectionBox(player, rtr, 0, partialTicks)
                 GlStateManager.enableAlpha()
+                GlStateManager.disableTexture2D()
             }
         }
 
