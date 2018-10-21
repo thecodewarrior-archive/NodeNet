@@ -5,6 +5,7 @@ import com.teamwizardry.librarianlib.features.network.PacketHandler
 import com.thecodewarrior.nodenet.NodeNet
 import com.thecodewarrior.nodenet.client.render.nodes.MissingTypeRenderer
 import com.thecodewarrior.nodenet.client.render.nodes.ParticleGeneratorRenderer
+import com.thecodewarrior.nodenet.client.render.nodes.RedstoneGateRenderer
 import com.thecodewarrior.nodenet.client.render.nodes.RedstoneReaderRenderer
 import com.thecodewarrior.nodenet.common.entity.EntityNode
 import com.thecodewarrior.nodenet.common.item.ModItems
@@ -16,6 +17,7 @@ import com.thecodewarrior.nodenet.common.node.BasicNodeType
 import com.thecodewarrior.nodenet.common.node.NodeType
 import com.thecodewarrior.nodenet.common.nodes.MissingTypeNode
 import com.thecodewarrior.nodenet.common.nodes.ParticleGeneratorNode
+import com.thecodewarrior.nodenet.common.nodes.RedstoneGateNode
 import com.thecodewarrior.nodenet.common.nodes.RedstoneReaderNode
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.event.RegistryEvent
@@ -61,7 +63,8 @@ open class CommonProxy {
         NodeType.REGISTRY.registerAll(
             BasicNodeType("missingno".toRl(), 2/16.0, ::MissingTypeNode, { ::MissingTypeRenderer }),
             BasicNodeType("nodenet:redstone_reader".toRl(), -1/16.0, ::RedstoneReaderNode, { ::RedstoneReaderRenderer }),
-            BasicNodeType("nodenet:particle_generator".toRl(), 2/16.0, ::ParticleGeneratorNode, { ::ParticleGeneratorRenderer })
+            BasicNodeType("nodenet:particle_generator".toRl(), 2/16.0, ::ParticleGeneratorNode, { ::ParticleGeneratorRenderer }),
+            BasicNodeType("nodenet:redstone_gate".toRl(), 2/16.0, ::RedstoneGateNode, { ::RedstoneGateRenderer })
         )
     }
 }
