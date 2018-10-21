@@ -1,6 +1,8 @@
 package com.thecodewarrior.nodenet.client
 
 import com.thecodewarrior.nodenet.common.item.INodeInteractingItem
+import com.thecodewarrior.nodenet.common.node.NodeTraceResult
+import com.thecodewarrior.nodenet.common.node.rayTraceNodes
 import net.minecraft.client.Minecraft
 import net.minecraft.client.settings.KeyBinding
 import net.minecraft.util.EnumFacing

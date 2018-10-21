@@ -1,9 +1,6 @@
 package com.thecodewarrior.nodenet.common.item
 
-import com.thecodewarrior.nodenet.client.NodeTraceResult
-import com.thecodewarrior.nodenet.common.entity.EntityNode
-import net.minecraft.entity.player.EntityPlayer
-import net.minecraft.world.World
+import com.thecodewarrior.nodenet.common.node.NodeTraceResult
 import net.minecraftforge.fml.relauncher.Side
 import net.minecraftforge.fml.relauncher.SideOnly
 

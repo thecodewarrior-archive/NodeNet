@@ -59,9 +59,9 @@ open class CommonProxy {
     @SubscribeEvent
     fun registerRenderers(e: RegistryEvent.Register<NodeType>) {
         NodeType.REGISTRY.registerAll(
-            BasicNodeType("missingno".toRl(), 0.0, ::MissingTypeNode, { ::MissingTypeRenderer }),
+            BasicNodeType("missingno".toRl(), 2/16.0, ::MissingTypeNode, { ::MissingTypeRenderer }),
             BasicNodeType("nodenet:redstone_reader".toRl(), -1/16.0, ::RedstoneReaderNode, { ::RedstoneReaderRenderer }),
-            BasicNodeType("nodenet:particle_generator".toRl(), 0.0, ::ParticleGeneratorNode, { ::ParticleGeneratorRenderer })
+            BasicNodeType("nodenet:particle_generator".toRl(), 2/16.0, ::ParticleGeneratorNode, { ::ParticleGeneratorRenderer })
         )
     }
 }
