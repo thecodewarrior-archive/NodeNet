@@ -44,15 +44,15 @@ object NodeWorldRenderer {
 
         val showAngle =
             if(player.heldEquipment.any { it.item == ModItems.connector })
-                50.0
-            else
                 30.0
+            else
+                15.0
         val showThreshold = MathHelper.cos(Math.toRadians(showAngle).toFloat())
-        fun shouldShow(entity: EntityNode, threshold: Float): Boolean {
-            return (entity.positionVector - player.getPositionEyes(e.partialTicks)).normalize() dot playerLook > threshold
+        fun shouldShow(entity: EntityNode): Boolean {
+            return (entity.positionVector - player.getPositionEyes(e.partialTicks)).normalize() dot playerLook > showThreshold
         }
         drawForEach(entities, e.partialTicks) { entity ->
-            if (NodeInteractionClient.nodeMouseOver?.entity == entity || shouldShow(entity, showThreshold)) {
+            if (NodeInteractionClient.nodeMouseOver?.entity == entity || shouldShow(entity)) {
                 GlStateManager.depthFunc(GL11.GL_ALWAYS)
             } else {
                 GlStateManager.depthFunc(GL11.GL_LEQUAL)
@@ -65,9 +65,7 @@ object NodeWorldRenderer {
             val connected = entity.connectedEntities()
             if(connected.isNotEmpty()) {
                 connected.forEach {
-                    if(shouldShow(entity, showThreshold) || shouldShow(it, showThreshold)) {
-                        renderLine(entity, it)
-                    }
+                    renderLine(entity, it)
                 }
             }
         }
