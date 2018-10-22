@@ -1,13 +1,15 @@
 package com.thecodewarrior.nodenet.common.node
 
+import com.teamwizardry.librarianlib.features.saving.AbstractSaveHandler
+import com.teamwizardry.librarianlib.features.saving.Savable
+import com.teamwizardry.librarianlib.features.saving.Save
 import com.teamwizardry.librarianlib.features.saving.SaveInPlace
 import com.teamwizardry.librarianlib.features.utilities.client.ClientRunnable
-import com.thecodewarrior.nodenet.client.render.node.NodeRenderer
-import com.thecodewarrior.nodenet.client.render.node.NodeRendererDefault
+import com.thecodewarrior.nodenet.client.render.node.NodeClient
+import com.thecodewarrior.nodenet.client.render.node.NodeClientDefault
 import com.thecodewarrior.nodenet.common.entity.EntityNode
 import net.minecraft.client.Minecraft
-import net.minecraft.util.EnumParticleTypes
-import net.minecraft.util.math.BlockPos
+import net.minecraft.nbt.NBTTagCompound
 import net.minecraft.world.World
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
@@ -15,17 +17,39 @@ import net.minecraftforge.fml.common.gameevent.TickEvent
 import net.minecraftforge.fml.relauncher.Side
 import net.minecraftforge.fml.relauncher.SideOnly
 import java.awt.Color
-import java.lang.Math.floor
-import java.lang.ref.WeakReference
 import java.util.WeakHashMap
 
-@SaveInPlace
-open class Node(val entity: EntityNode) {
+open class Node<T: NodeConfig<T>>(val entity: EntityNode, var config: T) {
 
-    @delegate:SideOnly(Side.CLIENT)
+    protected open fun computeSignal(): Signal? {
+        return null
+    }
+
+    @SideOnly(Side.CLIENT)
+    open fun clientTick() {
+    }
+
+    open fun serverTick() {
+    }
+
+    val type: NodeType = NodeType.REGISTRY.getValue(entity.type)!!
+
+    @field:SideOnly(Side.CLIENT)
     @get:SideOnly(Side.CLIENT)
-    val renderer: NodeRenderer by lazy {
-        NodeType.REGISTRY.getValue(entity.type)?.createRenderer(this) ?: NodeRendererDefault(this)
+    val client: NodeClient = type.createClient(this)
+
+    fun configChanged() {
+        propagateConfig(this.config, mutableSetOf())
+    }
+
+    private fun propagateConfig(config: T, visitedSet: MutableSet<Node<T>>) {
+        if(visitedSet.add(this)) {
+            this.config = config.clone()
+            this.entity.connectedConfigEntities().forEach {
+                @Suppress("UNCHECKED_CAST")
+                (it.node as Node<T>).propagateConfig(config, visitedSet)
+            }
+        }
     }
 
     private var lastCompute: Long = -1
@@ -51,15 +75,17 @@ open class Node(val entity: EntityNode) {
             return field
         }
 
-    protected open fun computeSignal(): Signal? {
-        return null
+    fun writeToNBT(compound: NBTTagCompound): NBTTagCompound {
+        var comp = NBTTagCompound().apply { AbstractSaveHandler.writeAutoNBT(config, false) }
+        compound.setTag("auto", comp)
+        comp = NBTTagCompound().apply { config.writeCustomNBT(this) }
+        compound.setTag("custom", comp)
+        return compound
     }
 
-    @SideOnly(Side.CLIENT)
-    open fun clientTick() {
-    }
-
-    open fun serverTick() {
+    fun readFromNBT(compound: NBTTagCompound) {
+        AbstractSaveHandler.readAutoNBT(config, compound.getCompoundTag("auto"), false)
+        config.readCustomNBT(compound.getCompoundTag("custom"))
     }
 
     companion object {
@@ -87,4 +113,24 @@ open class Node(val entity: EntityNode) {
 
 interface Signal {
     val color: Color
+}
+
+@SaveInPlace
+abstract class NodeConfig<T> {
+    abstract fun clone(): T
+
+    open fun writeCustomNBT(compound: NBTTagCompound) {
+        // NO-OP
+    }
+
+    open fun readCustomNBT(compound: NBTTagCompound) {
+        // NO-OP
+    }
+
+}
+
+class NoConfig: NodeConfig<NoConfig>() {
+    override fun clone(): NoConfig {
+        return NoConfig()
+    }
 }

@@ -1,18 +1,28 @@
 package com.thecodewarrior.nodenet.common.nodes
 
+import com.teamwizardry.librarianlib.features.saving.Savable
 import com.thecodewarrior.nodenet.common.entity.EntityNode
 import com.thecodewarrior.nodenet.common.node.Node
+import com.thecodewarrior.nodenet.common.node.NodeConfig
 import com.thecodewarrior.nodenet.common.node.Signal
 import net.minecraft.init.Blocks
 import net.minecraft.util.EnumFacing
 import net.minecraft.util.math.BlockPos
 import kotlin.math.floor
 
-class RedstoneGateNode(entity: EntityNode): Node(entity) {
-    val gate = Gate.OR
+class RedstoneGateNode(entity: EntityNode): Node<RedstoneGateNode.Config>(entity, Config()) {
 
     override fun computeSignal(): Signal {
-        return gate.compute(inputs)
+        return config.gate.compute(inputs)
+    }
+
+    @Savable
+    data class Config(
+        var gate: Gate = Gate.OR
+    ): NodeConfig<Config>() {
+        override fun clone(): Config {
+            return this.copy()
+        }
     }
 
     enum class Gate(val computer: (List<Signal>) -> Signal) {

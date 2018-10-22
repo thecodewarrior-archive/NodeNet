@@ -10,6 +10,7 @@ import com.teamwizardry.librarianlib.features.utilities.client.ClientRunnable
 import com.thecodewarrior.nodenet.common.item.ModItems
 import com.thecodewarrior.nodenet.common.network.PacketMoveNode
 import com.thecodewarrior.nodenet.common.network.PacketRotateNode
+import com.thecodewarrior.nodenet.common.node.NoConfig
 import com.thecodewarrior.nodenet.common.node.Node
 import com.thecodewarrior.nodenet.common.node.NodeType
 import com.thecodewarrior.nodenet.getEntityByUUID
@@ -30,13 +31,21 @@ class EntityNode(worldIn: World): EntityMod(worldIn), IEntityAdditionalSpawnData
         set(value) {
             field = value
             cached.keys.toList().forEach {
-                if(it !in value) cached.remove(it)
+                if(it !in value && it !in configConnections) cached.remove(it)
+            }
+        }
+    @Save
+    var configConnections = mutableSetOf<UUID>()
+        set(value) {
+            field = value
+            cached.keys.toList().forEach {
+                if(it !in value && it !in connections) cached.remove(it)
             }
         }
     var cached = mutableMapOf<UUID, Int?>()
     @Save
     var type: ResourceLocation = "missingno".toRl()
-    var node = Node(this)
+    var node: Node<*> = Node(this, NoConfig())
 
     override fun getEntityBoundingBox(): AxisAlignedBB {
         return AxisAlignedBB(Vec3d.ZERO, Vec3d.ZERO)
@@ -67,6 +76,22 @@ class EntityNode(worldIn: World): EntityMod(worldIn), IEntityAdditionalSpawnData
     override fun entityInit() {
         setEntityInvulnerable(true)
         setSize(0f, 0f)
+    }
+
+    override fun readCustomBytes(buf: ByteBuf) {
+        this.node.readFromNBT(buf.readTag())
+    }
+
+    override fun readCustomNBT(compound: NBTTagCompound) {
+        this.node.readFromNBT(compound)
+    }
+
+    override fun writeCustomBytes(buf: ByteBuf) {
+        buf.writeTag(this.node.writeToNBT(NBTTagCompound()))
+    }
+
+    override fun writeCustomNBT(compound: NBTTagCompound) {
+        this.node.writeToNBT(compound)
     }
 
     override fun readFromNBT(compound: NBTTagCompound) {
@@ -122,5 +147,43 @@ class EntityNode(worldIn: World): EntityMod(worldIn), IEntityAdditionalSpawnData
         }
     }
 
+    fun configConnectedTo(other: EntityNode): Boolean {
+        return configConnections.contains(other.persistentID)
+    }
+
+    fun disconnectConfig(other: EntityNode) {
+        this.configConnections.remove(other.persistentID)
+        this.cached.remove(other.persistentID)
+        this.dispatchEntityToNearbyPlayers()
+
+        other.configConnections.remove(this.persistentID)
+        other.cached.remove(this.persistentID)
+        other.dispatchEntityToNearbyPlayers()
+    }
+
+    fun canConnectConfigTo(other: EntityNode): Boolean {
+        return other.node.config.javaClass == node.config.javaClass
+    }
+
+    fun connectConfigTo(other: EntityNode) {
+        this.configConnections.add(other.persistentID)
+        this.cached[other.persistentID] = other.entityId
+        this.dispatchEntityToNearbyPlayers()
+
+        other.configConnections.add(this.persistentID)
+        other.cached[this.persistentID] = this.entityId
+        other.dispatchEntityToNearbyPlayers()
+    }
+
+    fun connectedConfigEntities(): List<EntityNode> {
+        return configConnections.mapNotNull {
+            val result = world.getEntityByUUID(it, cached[it])
+            cached[it] = result?.second
+            if(result == null) {
+                return@mapNotNull null
+            }
+            return@mapNotNull result.first as? EntityNode
+        }
+    }
 }
 

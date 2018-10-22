@@ -4,4 +4,5 @@ object ModItems {
     val node = ItemNode()
     val manipulator = ItemNodeManipulator()
     val connector = ItemNodeConnector()
+    val configurator = ItemNodeConfigurator()
 }

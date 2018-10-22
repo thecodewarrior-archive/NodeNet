@@ -1,6 +1,7 @@
 package com.thecodewarrior.nodenet.client
 
 import com.thecodewarrior.nodenet.common.item.INodeInteractingItem
+import com.thecodewarrior.nodenet.common.node.Node
 import com.thecodewarrior.nodenet.common.node.NodeTraceResult
 import com.thecodewarrior.nodenet.common.node.rayTraceNodes
 import net.minecraft.client.Minecraft
@@ -21,7 +22,7 @@ object NodeInteractionClient {
         val player = Minecraft.getMinecraft().player ?: return
         nodeMouseOver = player.rayTraceNodes(partialTicks)
 
-        if(nodeMouseOver != null && player.heldItemMainhand.item is INodeInteractingItem) {
+        if(nodeMouseOver != null && player.heldEquipment.any { it.item is INodeInteractingItem }) {
             Minecraft.getMinecraft().objectMouseOver = RayTraceResult(RayTraceResult.Type.MISS, Vec3d.ZERO,
                     EnumFacing.UP, BlockPos.ORIGIN)
         }
@@ -32,7 +33,7 @@ object NodeInteractionClient {
      */
     @JvmStatic
     fun shouldSkipSettingObjectMouseOver(partialTicks: Float): Boolean {
-        return nodeMouseOver != null && Minecraft.getMinecraft().player.heldItemMainhand.item is INodeInteractingItem
+        return nodeMouseOver != null && Minecraft.getMinecraft().player.heldEquipment.any { it.item is INodeInteractingItem }
     }
 
     private var rightDown = false
@@ -45,61 +46,65 @@ object NodeInteractionClient {
     @JvmStatic
     fun processKeyBinds(): Boolean {
         val mc = Minecraft.getMinecraft()
-        if(mc.player.heldItemMainhand.item !is INodeInteractingItem) {
+        val nodeInteractingHand = mc.player.heldEquipment.indexOfFirst { it.item is INodeInteractingItem }
+        if(nodeInteractingHand < 0) {
             return false
         }
 
-        if(rightDown != mc.gameSettings.keyBindUseItem.isKeyDown) {
-            rightDown = mc.gameSettings.keyBindUseItem.isKeyDown
-            if(rightDown) {
+        if(!rightDown && mc.gameSettings.keyBindUseItem.isKeyDown) {
+            if(nodeMouseOver != null) {
+                rightDown = mc.gameSettings.keyBindUseItem.isKeyDown
                 (mc.player.heldItemMainhand.item as? INodeInteractingItem)
-                        ?.rightClickBegan(nodeMouseOver)
-            } else {
-                (mc.player.heldItemMainhand.item as? INodeInteractingItem)
-                        ?.rightClickEnded(nodeMouseOver)
+                    ?.rightClickBegan(nodeMouseOver)
             }
+        } else if(rightDown && !mc.gameSettings.keyBindUseItem.isKeyDown) {
+            rightDown = false
+            (mc.player.heldItemMainhand.item as? INodeInteractingItem)
+                ?.rightClickEnded(nodeMouseOver)
         } else if(rightDown) {
             (mc.player.heldItemMainhand.item as? INodeInteractingItem)
                     ?.rightClickTick(nodeMouseOver)
         }
 
-        if(leftDown != mc.gameSettings.keyBindAttack.isKeyDown) {
-            leftDown = mc.gameSettings.keyBindAttack.isKeyDown
-            if(leftDown) {
+        if(!middleDown && mc.gameSettings.keyBindPickBlock.isKeyDown) {
+            if(nodeMouseOver != null) {
+                middleDown = mc.gameSettings.keyBindPickBlock.isKeyDown
                 (mc.player.heldItemMainhand.item as? INodeInteractingItem)
-                        ?.leftClickBegan(nodeMouseOver)
-            } else {
-                (mc.player.heldItemMainhand.item as? INodeInteractingItem)
-                        ?.leftClickEnded(nodeMouseOver)
+                    ?.middleClickBegan(nodeMouseOver)
             }
-        } else if(leftDown) {
+        } else if(middleDown && !mc.gameSettings.keyBindPickBlock.isKeyDown) {
+            middleDown = false
             (mc.player.heldItemMainhand.item as? INodeInteractingItem)
-                    ?.leftClickTick(nodeMouseOver)
-        }
-
-        if(middleDown != mc.gameSettings.keyBindPickBlock.isKeyDown) {
-            middleDown = mc.gameSettings.keyBindPickBlock.isKeyDown
-            if(middleDown) {
-                (mc.player.heldItemMainhand.item as? INodeInteractingItem)
-                        ?.middleClickBegan(nodeMouseOver)
-            } else {
-                (mc.player.heldItemMainhand.item as? INodeInteractingItem)
-                        ?.middleClickEnded(nodeMouseOver)
-            }
+                ?.middleClickEnded(nodeMouseOver)
         } else if(middleDown) {
             (mc.player.heldItemMainhand.item as? INodeInteractingItem)
-                    ?.middleClickTick(nodeMouseOver)
+                ?.middleClickTick(nodeMouseOver)
+        }
+
+        if(!leftDown && mc.gameSettings.keyBindAttack.isKeyDown) {
+            if(nodeMouseOver != null) {
+                leftDown = mc.gameSettings.keyBindAttack.isKeyDown
+                (mc.player.heldItemMainhand.item as? INodeInteractingItem)
+                    ?.leftClickBegan(nodeMouseOver)
+            }
+        } else if(leftDown && !mc.gameSettings.keyBindAttack.isKeyDown) {
+            leftDown = false
+            (mc.player.heldItemMainhand.item as? INodeInteractingItem)
+                ?.leftClickEnded(nodeMouseOver)
+        } else if(leftDown) {
+            (mc.player.heldItemMainhand.item as? INodeInteractingItem)
+                ?.leftClickTick(nodeMouseOver)
         }
 
         if(rightDown || leftDown || middleDown) {
-            mc.player.activeHand = EnumHand.MAIN_HAND
+            mc.player.activeHand = EnumHand.values()[nodeInteractingHand]
         } else {
             mc.player.resetActiveHand()
         }
 
-        mc.gameSettings.keyBindUseItem.clearPressed()
-        mc.gameSettings.keyBindAttack.clearPressed()
-        mc.gameSettings.keyBindPickBlock.clearPressed()
+        if(rightDown) mc.gameSettings.keyBindUseItem.clearPressed()
+        if(leftDown) mc.gameSettings.keyBindAttack.clearPressed()
+        if(middleDown) mc.gameSettings.keyBindPickBlock.clearPressed()
 
 //        if (mc.player.getHeldItem(mc.player.activeHand).item is INodeInteractingItem) {
 //            // process continuous use of item

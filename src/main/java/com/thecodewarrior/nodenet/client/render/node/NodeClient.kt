@@ -7,15 +7,18 @@ import com.thecodewarrior.nodenet.common.node.Node
 import com.thecodewarrior.nodenet.drawing
 import com.thecodewarrior.nodenet.edges
 import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.Gui
+import net.minecraft.client.gui.GuiScreen
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats
 import net.minecraft.util.math.AxisAlignedBB
 import org.lwjgl.opengl.GL11
 import java.awt.Color
 
-abstract class NodeRenderer(val node: Node) {
+abstract class NodeClient(val node: Node<*>) {
     abstract val color: Color
     abstract fun render()
+    abstract fun createConfigurationGui(): GuiScreen?
 
     fun coreVisualRadius(): Double {
         return node.entity.visualRadius(Minecraft.getMinecraft().player)
@@ -37,10 +40,14 @@ abstract class NodeRenderer(val node: Node) {
     }
 }
 
-class NodeRendererDefault(node: Node): NodeRenderer(node) {
+class NodeClientDefault(node: Node<*>): NodeClient(node) {
     override val color: Color
         get() = Color.DARK_GRAY
 
     override fun render() {
+    }
+
+    override fun createConfigurationGui(): GuiScreen? {
+        return null
     }
 }

@@ -3,12 +3,13 @@ package com.thecodewarrior.nodenet.common
 import com.teamwizardry.librarianlib.features.kotlin.toRl
 import com.teamwizardry.librarianlib.features.network.PacketHandler
 import com.thecodewarrior.nodenet.NodeNet
-import com.thecodewarrior.nodenet.client.render.nodes.MissingTypeRenderer
-import com.thecodewarrior.nodenet.client.render.nodes.ParticleGeneratorRenderer
-import com.thecodewarrior.nodenet.client.render.nodes.RedstoneGateRenderer
-import com.thecodewarrior.nodenet.client.render.nodes.RedstoneReaderRenderer
+import com.thecodewarrior.nodenet.client.render.nodes.MissingTypeClient
+import com.thecodewarrior.nodenet.client.render.nodes.ParticleGeneratorClient
+import com.thecodewarrior.nodenet.client.render.nodes.RedstoneGateClient
+import com.thecodewarrior.nodenet.client.render.nodes.RedstoneReaderClient
 import com.thecodewarrior.nodenet.common.entity.EntityNode
 import com.thecodewarrior.nodenet.common.item.ModItems
+import com.thecodewarrior.nodenet.common.network.PacketConfigConnectNodes
 import com.thecodewarrior.nodenet.common.network.PacketConnectNodes
 import com.thecodewarrior.nodenet.common.network.PacketDeleteNode
 import com.thecodewarrior.nodenet.common.network.PacketMoveNode
@@ -51,6 +52,7 @@ open class CommonProxy {
     }
 
     private fun network() {
+        PacketHandler.register(PacketConfigConnectNodes::class.java, Side.SERVER)
         PacketHandler.register(PacketConnectNodes::class.java, Side.SERVER)
         PacketHandler.register(PacketDeleteNode::class.java, Side.SERVER)
         PacketHandler.register(PacketMoveNode::class.java, Side.SERVER)
@@ -61,10 +63,10 @@ open class CommonProxy {
     @SubscribeEvent
     fun registerRenderers(e: RegistryEvent.Register<NodeType>) {
         NodeType.REGISTRY.registerAll(
-            BasicNodeType("missingno".toRl(), 2/16.0, ::MissingTypeNode, { ::MissingTypeRenderer }),
-            BasicNodeType("nodenet:redstone_reader".toRl(), -1/16.0, ::RedstoneReaderNode, { ::RedstoneReaderRenderer }),
-            BasicNodeType("nodenet:particle_generator".toRl(), 2/16.0, ::ParticleGeneratorNode, { ::ParticleGeneratorRenderer }),
-            BasicNodeType("nodenet:redstone_gate".toRl(), 2/16.0, ::RedstoneGateNode, { ::RedstoneGateRenderer })
+            BasicNodeType("missingno".toRl(), 2/16.0, ::MissingTypeNode, { ::MissingTypeClient }),
+            BasicNodeType("nodenet:redstone_reader".toRl(), -1/16.0, ::RedstoneReaderNode, { ::RedstoneReaderClient }),
+            BasicNodeType("nodenet:particle_generator".toRl(), 2/16.0, ::ParticleGeneratorNode, { ::ParticleGeneratorClient }),
+            BasicNodeType("nodenet:redstone_gate".toRl(), 2/16.0, ::RedstoneGateNode, { ::RedstoneGateClient })
         )
     }
 }

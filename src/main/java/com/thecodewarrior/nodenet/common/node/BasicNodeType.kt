@@ -1,7 +1,7 @@
 package com.thecodewarrior.nodenet.common.node
 
 import com.teamwizardry.librarianlib.features.utilities.client.ClientRunnable
-import com.thecodewarrior.nodenet.client.render.node.NodeRenderer
+import com.thecodewarrior.nodenet.client.render.node.NodeClient
 import com.thecodewarrior.nodenet.common.entity.EntityNode
 import net.minecraft.util.ResourceLocation
 import net.minecraftforge.fml.relauncher.Side
@@ -12,33 +12,33 @@ import java.util.function.Function
 class BasicNodeType(
     name: ResourceLocation,
     override val positioningInset: Double,
-    private val nodeConstructor: (EntityNode) -> Node,
-    rendererConstructor: () -> (Node) -> NodeRenderer
+    private val nodeConstructor: (EntityNode) -> Node<*>,
+    clientConstructor: () -> (Node<*>) -> NodeClient
 ): NodeType() {
     constructor(name: ResourceLocation,
         positioningInset: Double,
-        nodeConstructor: Function<EntityNode, Node>,
-        rendererConstructor: Supplier<Function<Node, NodeRenderer>>):
+        nodeConstructor: Function<EntityNode, Node<*>>,
+        clientConstructor: Supplier<Function<Node<*>, NodeClient>>):
         this(name,
             positioningInset,
             { nodeConstructor.apply(it) },
-            { rendererConstructor.get().let { con -> { con.apply(it) } } }
+            { clientConstructor.get().let { con -> { con.apply(it) } } }
         )
     init {
         this.registryName = name
         ClientRunnable.run {
-            this.rendererConstructor = rendererConstructor()
+            this.clientConstructor = clientConstructor()
         }
     }
 
     @SideOnly(Side.CLIENT)
-    private lateinit var rendererConstructor: (Node) -> NodeRenderer
+    private lateinit var clientConstructor: (Node<*>) -> NodeClient
 
-    override fun createRenderer(node: Node): NodeRenderer {
-        return rendererConstructor(node)
+    override fun createClient(node: Node<*>): NodeClient {
+        return clientConstructor(node)
     }
 
-    override fun createNode(entity: EntityNode): Node {
+    override fun createNode(entity: EntityNode): Node<*> {
         return nodeConstructor(entity)
     }
 }

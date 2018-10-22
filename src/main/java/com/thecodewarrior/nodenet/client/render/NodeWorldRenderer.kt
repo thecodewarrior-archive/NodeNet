@@ -62,32 +62,27 @@ object NodeWorldRenderer {
         GlStateManager.depthFunc(GL11.GL_ALWAYS)
         vb.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR)
         entities.forEach { entity ->
-            val connected = entity.connectedEntities()
+            var connected = entity.connectedEntities()
             if(connected.isNotEmpty()) {
                 connected.forEach {
-                    renderLine(entity, it)
+                    renderLine(entity, it, it.node.output?.color ?: Color.DARK_GRAY, true)
+                }
+            }
+            connected = entity.connectedConfigEntities()
+            if(connected.isNotEmpty()) {
+                connected.forEach {
+                    renderLine(entity, it, Color.CYAN, false)
                 }
             }
         }
         tessellator.draw()
 
-        if(player.heldEquipment.any { it.item == ModItems.connector }) {
+        if(player.heldEquipment.any { it.item == ModItems.connector || it.item == ModItems.configurator }) {
             ModItems.connector.connectingFromNode?.let { e.world.getEntityByID(it) }?.let { source ->
-                val startPos = source.positionVector
-
-                val mouseOver = NodeInteractionClient.nodeMouseOver
-                val endPos = if(mouseOver != null) {
-                    mouseOver.entity.positionVector
-                } else {
-                    player.getPositionEyes(e.partialTicks) + (player.getLook(e.partialTicks) * 2)
-                }
-
-                GlStateManager.depthFunc(GL11.GL_ALWAYS)
-                vb.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR)
-                vb.pos(startPos).color(Color.green).endVertex()
-                vb.pos(endPos).color(Color.green).endVertex()
-                tessellator.draw()
-                GlStateManager.depthFunc(GL11.GL_LEQUAL)
+                lineToEyes(source as EntityNode, Color.green)
+            }
+            ModItems.configurator.connectingFromNode?.let { e.world.getEntityByID(it) }?.let { source ->
+                lineToEyes(source as EntityNode, Color.cyan)
             }
         }
 
@@ -114,11 +109,37 @@ object NodeWorldRenderer {
 
     }
 
-    fun renderLine(from: EntityNode, to: EntityNode) {
+    fun lineToEyes(source: EntityNode, color: Color) {
+        val player = Minecraft.getMinecraft().player
+        val tessellator = Tessellator.getInstance()
+        val vb = tessellator.buffer
+        val startPos = source.positionVector
+
+        val mouseOver = NodeInteractionClient.nodeMouseOver
+        val endPos = if(mouseOver != null) {
+            mouseOver.entity.positionVector
+        } else {
+            player.getPositionEyes(partialTicks) + (player.getLook(partialTicks) * 2)
+        }
+
+        GlStateManager.depthFunc(GL11.GL_ALWAYS)
+        vb.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR)
+        vb.pos(startPos).color(color).endVertex()
+        vb.pos(endPos).color(color).endVertex()
+        tessellator.draw()
+        GlStateManager.depthFunc(GL11.GL_LEQUAL)
+    }
+
+    fun renderLine(from: EntityNode, to: EntityNode, color: Color, enableGap: Boolean) {
         val tessellator = Tessellator.getInstance()
         val vb = tessellator.buffer
 
-        val color = to.node.output?.color ?: Color.DARK_GRAY
+        if(!enableGap) {
+            vb.pos(from.positionVector).color(color).endVertex()
+            vb.pos(to.positionVector).color(color).endVertex()
+            return
+        }
+
         val diff = to.positionVector - from.positionVector
         val gapSize = 1/4.0
         val lineLength = diff.lengthVector()
@@ -156,9 +177,9 @@ object NodeWorldRenderer {
     }
 
     fun renderNode(entity: EntityNode, partialTicks: Float) {
-        entity.node.renderer.renderCore()
+        entity.node.client.renderCore()
         if(NodeInteractionClient.nodeMouseOver?.entity == entity) {
-            entity.node.renderer.render()
+            entity.node.client.render()
         }
     }
 }

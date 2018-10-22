@@ -1,0 +1,6 @@
+nodenet:gui.redstone_gate.gate.and=AND
+nodenet:gui.redstone_gate.gate.or=OR
+nodenet:gui.redstone_gate.gate.xor=XOR
+nodenet:gui.redstone_gate.gate.nand=NAND
+nodenet:gui.redstone_gate.gate.nor=NOR
+nodenet:gui.redstone_gate.gate.xnor=XNOR
